@@ -1,138 +1,196 @@
-import { useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native-web";
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, View } from "react-native-web";
+import { getDesktopApi, isUsingMockApi } from "./api.js";
+import { Composer } from "./Composer.js";
+import { Sidebar } from "./Sidebar.js";
+import { Thread } from "./Thread.js";
+import type { ConversationDetail, SidebarPayload } from "./types.js";
 
 export function App() {
-  const [prompt, setPrompt] = useState("");
-  const [response, setResponse] = useState("");
+  const api = getDesktopApi();
+  const [sidebar, setSidebar] = useState<SidebarPayload | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [conversation, setConversation] = useState<ConversationDetail | null>(
+    null,
+  );
+  const [draft, setDraft] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  async function onSubmit(): Promise<void> {
-    const trimmed = prompt.trim();
-    if (!trimmed || loading) {
-      return;
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrap(): Promise<void> {
+      setLoading(true);
+      setError("");
+      try {
+        const data = await api.getBootstrap();
+        if (cancelled) {
+          return;
+        }
+        setSidebar(data.sidebar);
+        if (data.lastConversationId) {
+          setSelectedId(data.lastConversationId);
+          const detail = await api.getConversation(data.lastConversationId);
+          if (!cancelled) {
+            setConversation(detail);
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : String(err));
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
     }
 
+    void bootstrap();
+    return () => {
+      cancelled = true;
+    };
+  }, [api]);
+
+  async function refreshSidebar(): Promise<void> {
+    const next = await api.listSidebar();
+    setSidebar(next);
+  }
+
+  async function selectConversation(id: string): Promise<void> {
+    setSelectedId(id);
     setLoading(true);
     setError("");
-    setResponse("");
-
     try {
-      if (!window.api?.runAgent) {
-        throw new Error(
-          "Agent API is only available in the Electron app. Run npm run desktop (or desktop:dev).",
-        );
-      }
-      const text = await window.api.runAgent(trimmed);
-      setResponse(text);
+      const detail = await api.getConversation(id);
+      setConversation(detail);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
+      setConversation(null);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
   }
 
-  const inElectron = Boolean(window.api?.runAgent);
+  async function onNewChat(): Promise<void> {
+    setError("");
+    setSending(true);
+    try {
+      const folder = await api.pickFolder();
+      if (!folder) {
+        return;
+      }
+      const created = await api.createConversation(folder);
+      await refreshSidebar();
+      setSelectedId(created.id);
+      setConversation(created);
+      setDraft("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function onDelete(id: string): Promise<void> {
+    setError("");
+    setSending(true);
+    try {
+      await api.deleteConversation(id);
+      await refreshSidebar();
+      if (selectedId === id) {
+        const next = await api.getBootstrap();
+        setSidebar(next.sidebar);
+        if (next.lastConversationId) {
+          await selectConversation(next.lastConversationId);
+        } else {
+          setSelectedId(null);
+          setConversation(null);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function onSend(): Promise<void> {
+    const trimmed = draft.trim();
+    if (!selectedId || !trimmed || sending) {
+      return;
+    }
+    setSending(true);
+    setError("");
+    try {
+      const updated = await api.sendMessage(selectedId, trimmed);
+      setConversation(updated);
+      setDraft("");
+      await refreshSidebar();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const busy = loading || sending;
 
   return (
-    <View style={styles.container}>
-      {!inElectron ? (
-        <Text style={styles.hint}>
-          Browser preview: UI only. Use npm run desktop to call the agent.
-        </Text>
-      ) : null}
-      <Text style={styles.label}>Prompt</Text>
-      <TextInput
-        style={styles.input}
-        value={prompt}
-        onChangeText={setPrompt}
-        placeholder="Ask the agent…"
-        multiline
-        editable={!loading}
+    <View style={styles.shell}>
+      <Sidebar
+        sidebar={sidebar}
+        selectedId={selectedId}
+        onSelect={(id) => void selectConversation(id)}
+        onNewChat={() => void onNewChat()}
+        onDelete={(id) => void onDelete(id)}
+        busy={busy}
       />
-      <Pressable
-        style={loading ? [styles.button, styles.buttonDisabled] : styles.button}
-        onPress={() => void onSubmit()}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>{loading ? "Running…" : "Submit"}</Text>
-      </Pressable>
-      {loading ? <ActivityIndicator style={styles.spinner} /> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {response ? (
-        <ScrollView style={styles.responseBox}>
-          <Text style={styles.response}>{response}</Text>
-        </ScrollView>
-      ) : null}
+      <View style={styles.main}>
+        {isUsingMockApi() ? (
+          <Text style={styles.banner}>
+            Browser preview with mock data. Real Electron IPC / conversations
+            cannot be tested here.
+          </Text>
+        ) : null}
+        <Thread
+          conversation={conversation}
+          loading={busy}
+          error={error}
+          hasSelection={selectedId !== null}
+        />
+        <Composer
+          value={draft}
+          onChange={setDraft}
+          onSend={() => void onSend()}
+          disabled={!selectedId || sending}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  shell: {
     flex: 1,
-    padding: 16,
-    gap: 12,
+    flexDirection: "row",
     backgroundColor: "#111",
     minHeight: "100vh",
   },
-  label: {
-    color: "#eee",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  hint: {
-    color: "#a3a3a3",
-    fontSize: 13,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#444",
-    borderRadius: 8,
-    padding: 12,
-    minHeight: 80,
-    color: "#fff",
-    backgroundColor: "#1a1a1a",
-  },
-  button: {
-    alignSelf: "flex-start",
-    backgroundColor: "#2563eb",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  spinner: {
-    marginTop: 8,
-  },
-  error: {
-    color: "#f87171",
-  },
-  responseBox: {
+  main: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#333",
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: "#1a1a1a",
+    minWidth: 0,
+    minHeight: "100vh",
   },
-  response: {
-    color: "#e5e5e5",
-    lineHeight: 22,
+  banner: {
+    color: "#a3a3a3",
+    fontSize: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2a2a2a",
+    backgroundColor: "#171717",
   },
 });
