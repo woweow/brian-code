@@ -77,16 +77,13 @@ Desktop main opens SQLite, exposes `window.api` (`pickFolder`, `listSidebar`, `g
 
 ## better-sqlite3 + Electron
 
-`better-sqlite3` is a native module. Node and Electron use different ABIs. If Electron fails to load the DB:
+`better-sqlite3` is a native module (Node ABI ≠ Electron ABI). `npm run desktop` / `desktop:dev` rebuild it for Electron automatically. `npm test` rebuilds it for Node first.
+
+Manual flip if needed:
 
 ```bash
-npx @electron/rebuild -f -w better-sqlite3
-```
-
-After desktop work, restore the Node build for CLI/tests:
-
-```bash
-npm rebuild better-sqlite3
+npm run rebuild:native:electron   # before desktop
+npm run rebuild:native:node       # before CLI / tests
 ```
 
 ## Adding a tool
