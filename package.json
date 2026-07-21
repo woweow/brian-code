@@ -11,8 +11,8 @@
     "desktop": "npm run build -w @brian-code/desktop && npm run start -w @brian-code/desktop",
     "desktop:dev": "DESKTOP_DEV=1 npm run build:electron -w @brian-code/desktop && concurrently \"npm run dev:renderer -w @brian-code/desktop\" \"DESKTOP_DEV=1 npm run start -w @brian-code/desktop\"",
     "ui:dev": "npm run dev:renderer -w @brian-code/desktop",
-    "test": "npm run test -w @brian-code/agent",
-    "typecheck": "npm run build -w @brian-code/agent && tsc -p apps/cli --noEmit && tsc -p apps/desktop --noEmit && tsc -p apps/desktop/tsconfig.electron.json --noEmit"
+    "test": "npm run test -w @brian-code/agent && npm run test -w @brian-code/chat-store",
+    "typecheck": "npm run build -w @brian-code/agent && npm run build -w @brian-code/chat-store && tsc -p apps/cli --noEmit && tsc -p apps/desktop --noEmit && tsc -p apps/desktop/tsconfig.electron.json --noEmit"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

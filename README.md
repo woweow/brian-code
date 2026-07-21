@@ -59,9 +59,10 @@ npm run typecheck
 ## Repository layout
 
 ```
-packages/agent/     @brian-code/agent — multi-turn runAgent (+ transcript), OpenAI client, tools/
-apps/cli/           Terminal entrypoint
-apps/desktop/       Electron main/preload + RN Web UI (Vite)
+packages/agent/       @brian-code/agent — multi-turn runAgent (+ transcript), OpenAI client, tools/
+packages/chat-store/  @brian-code/chat-store — SQLite workspaces, conversations, UI transcript projector
+apps/cli/             Terminal entrypoint
+apps/desktop/         Electron main/preload + RN Web UI (Vite)
 ```
 
 The desktop **main process** loads `.env`, calls `runAgent` from `@brian-code/agent`, and exposes `window.api.runAgent` via preload IPC. Future local capabilities (bash, file edits) belong in the main process, not the renderer.
