@@ -1,0 +1,1 @@
+This is a hackathon/proof of concept/educational chat app that is never intended to land in production. We should never care about backwards compatability. We should write minimal tests which only cover critical scenarios. We should always imagine that the next feature radically changes the system. 
