@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native-web";
 import { getDesktopApi, isUsingMockApi } from "./api.js";
 import { Composer } from "./Composer.js";
 import { shouldShowComposer } from "./composerKeys.js";
+import { appendOptimisticUserTurn } from "./optimisticSend.js";
 import { Sidebar } from "./Sidebar.js";
 import { Thread } from "./Thread.js";
 import type { ConversationDetail, SidebarPayload } from "./types.js";
@@ -125,17 +126,22 @@ export function App() {
 
   async function onSend(): Promise<void> {
     const trimmed = draft.trim();
-    if (!selectedId || !trimmed || sending || actionBusy) {
+    if (!selectedId || !trimmed || sending || actionBusy || !conversation) {
       return;
     }
+    const conversationId = selectedId;
+    const prior = conversation;
+    setDraft("");
     setSending(true);
     setError("");
+    setConversation(appendOptimisticUserTurn(prior, trimmed));
     try {
-      const updated = await api.sendMessage(selectedId, trimmed);
+      const updated = await api.sendMessage(conversationId, trimmed);
       setConversation(updated);
-      setDraft("");
       await refreshSidebar();
     } catch (err) {
+      setConversation(prior);
+      setDraft(trimmed);
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSending(false);
@@ -175,6 +181,7 @@ export function App() {
             onChange={setDraft}
             onSend={() => void onSend()}
             disabled={!selectedId || busy}
+            locked={sending}
           />
         ) : null}
       </View>

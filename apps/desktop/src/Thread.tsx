@@ -6,6 +6,7 @@ import {
   View,
   type ScrollViewHandle,
 } from "react-native-web";
+import { WaitingMascot } from "./WaitingMascot.js";
 import type { ConversationDetail, UiTurn } from "./types.js";
 
 type ThreadProps = {
@@ -116,7 +117,10 @@ export function Thread({
             <Bubble key={`${turn.role}-${index}`} turn={turn} />
           ))}
           {sending ? (
-            <Text style={styles.statusInline}>Waiting for reply…</Text>
+            <View style={styles.waitingRow}>
+              <WaitingMascot />
+              <Text style={styles.statusInline}>Waiting for reply…</Text>
+            </View>
           ) : null}
         </ScrollView>
       )}
@@ -174,11 +178,16 @@ const styles = StyleSheet.create({
     color: "#a3a3a3",
     fontSize: 14,
   },
+  waitingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 8,
+    marginBottom: 16,
+  },
   statusInline: {
     color: "#a3a3a3",
     fontSize: 13,
-    marginTop: 8,
-    marginBottom: 16,
   },
   error: {
     color: "#f87171",

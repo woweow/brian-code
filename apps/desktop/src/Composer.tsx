@@ -6,6 +6,7 @@ type ComposerProps = {
   onChange: (text: string) => void;
   onSend: () => void;
   disabled: boolean;
+  locked?: boolean;
   placeholder?: string;
 };
 
@@ -14,9 +15,13 @@ export function Composer({
   onChange,
   onSend,
   disabled,
+  locked = false,
   placeholder = "Message the agent…",
 }: ComposerProps) {
   const canSend = !disabled && value.trim().length > 0;
+  const inputStyle = locked
+    ? [styles.input, styles.inputLocked]
+    : styles.input;
 
   function onKeyPress(event: {
     key: string;
@@ -35,10 +40,10 @@ export function Composer({
   return (
     <View style={styles.wrap}>
       <TextInput
-        style={styles.input}
+        style={inputStyle}
         value={value}
         onChangeText={onChange}
-        placeholder={placeholder}
+        placeholder={locked ? "Waiting for reply…" : placeholder}
         multiline
         editable={!disabled}
         onKeyPress={onKeyPress}
@@ -76,6 +81,11 @@ const styles = StyleSheet.create({
     color: "#f5f5f5",
     backgroundColor: "#1a1a1a",
     fontSize: 14,
+  },
+  inputLocked: {
+    borderColor: "#2a2a2a",
+    backgroundColor: "#151515",
+    color: "#737373",
   },
   send: {
     backgroundColor: "#2563eb",

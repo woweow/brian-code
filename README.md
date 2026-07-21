@@ -48,7 +48,7 @@ npm run desktop:dev
 npm run ui:dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). Use `desktop` / `desktop:dev` for real conversations. The composer is hidden until a chat is selected; Enter sends (Shift+Enter for a newline). Sidebar and thread scroll independently.
+Open [http://localhost:5173](http://localhost:5173). Use `desktop` / `desktop:dev` for real conversations. The composer is hidden until a chat is selected; Enter sends (Shift+Enter for a newline). Sidebar and thread scroll independently. While waiting on a reply, the composer locks and `apps/desktop/src/assets/loading-image.png` plays beside the status line.
 
 **Tests / typecheck:**
 
