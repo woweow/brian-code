@@ -31,6 +31,7 @@ BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- new --folder /tmp
 BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- list
 BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- send <conversation-id> "Hello"
 BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- show <conversation-id>
+BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- fork <conversation-id>
 BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- delete <conversation-id>
 ```
 
@@ -73,7 +74,7 @@ apps/cli/             agent one-shot + chat CRUD CLI
 apps/desktop/         Electron main/preload + RN Web ChatGPT-like shell
 ```
 
-Desktop main opens SQLite, exposes `window.api` (`pickFolder`, `listSidebar`, `getBootstrap`, `createConversation`, `getConversation`, `sendMessage`, `deleteConversation`), and calls multi-turn `runAgent` on send.
+Desktop main opens SQLite, exposes `window.api` (`pickFolder`, `listSidebar`, `getBootstrap`, `createConversation`, `getConversation`, `sendMessage`, `forkConversation`, `deleteConversation`), and calls multi-turn `runAgent` on send.
 
 ## better-sqlite3 + Electron
 

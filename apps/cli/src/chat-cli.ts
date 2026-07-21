@@ -9,6 +9,7 @@ import {
   closeDb,
   createConversationInFolder,
   deleteConversationAndMaybeWorkspace,
+  forkConversationDetail,
   getConversationDetail,
   openDb,
   sendMessage,
@@ -33,6 +34,7 @@ function usage(): never {
   npm run chat -- list
   npm run chat -- show <id>
   npm run chat -- send <id> <message...>
+  npm run chat -- fork <id>
   npm run chat -- delete <id>`);
   process.exit(1);
 }
@@ -96,6 +98,17 @@ async function main(): Promise<void> {
         runAgent as RunAgentFn,
       );
       console.log(detail.turns.at(-1)?.text ?? "");
+      return;
+    }
+
+    if (command === "fork") {
+      const id = args[1]?.trim();
+      if (!id) {
+        console.error("fork requires <id>");
+        process.exit(1);
+      }
+      const detail = forkConversationDetail(db, id);
+      console.log(detail.id);
       return;
     }
 

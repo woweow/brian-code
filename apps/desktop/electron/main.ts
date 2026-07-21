@@ -8,6 +8,7 @@ import {
   closeDb,
   createConversationInFolder,
   deleteConversationAndMaybeWorkspace,
+  forkConversationDetail,
   getBootstrap,
   getConversationDetail,
   openDb,
@@ -117,6 +118,13 @@ function registerIpcHandlers(): void {
       );
     },
   );
+
+  ipcMain.handle("chat:forkConversation", async (_event, id: unknown) => {
+    if (typeof id !== "string" || id.trim() === "") {
+      throw new Error("id must be a non-empty string");
+    }
+    return forkConversationDetail(requireDb(), id.trim());
+  });
 
   ipcMain.handle("chat:deleteConversation", async (_event, id: unknown) => {
     if (typeof id !== "string" || id.trim() === "") {

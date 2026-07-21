@@ -7,6 +7,7 @@ import {
   createConversation,
   deleteConversation,
   findOrCreateWorkspace,
+  forkConversation,
   getConversation,
   getMeta,
   listConversationsForSidebar,
@@ -101,6 +102,49 @@ describe("chat-store", () => {
     );
     expect(updated.title).toBe("Renamed chat");
     expect(getConversation(db, convo.id)?.title).toBe("Renamed chat");
+  });
+
+  it("forks a conversation with copied transcript and (copy) title", () => {
+    const ws = findOrCreateWorkspace(db, path.join(dir, "fork"));
+    const source = createConversation(db, ws.id);
+    const transcript = [
+      { role: "user", content: "Call a tool" },
+      {
+        type: "function_call",
+        name: "bash",
+        call_id: "c1",
+        arguments: '{"command":"ls"}',
+      },
+      {
+        type: "function_call_output",
+        call_id: "c1",
+        output: "file.txt",
+      },
+      {
+        type: "message",
+        role: "assistant",
+        content: [{ type: "output_text", text: "Done." }],
+      },
+    ];
+    updateConversationTranscript(db, source.id, transcript, {
+      title: "Tool chat",
+    });
+
+    const forked = forkConversation(db, source.id);
+    expect(forked.id).not.toBe(source.id);
+    expect(forked.workspaceId).toBe(ws.id);
+    expect(forked.title).toBe("Tool chat (copy)");
+    expect(forked.transcript).toEqual(transcript);
+
+    const sourceAfter = getConversation(db, source.id);
+    expect(sourceAfter?.title).toBe("Tool chat");
+    expect(sourceAfter?.transcript).toEqual(transcript);
+
+    forked.transcript[0] = { role: "user", content: "mutated" };
+    expect(getConversation(db, source.id)?.transcript[0]).toEqual({
+      role: "user",
+      content: "Call a tool",
+    });
   });
 
   it("getMeta and setMeta round-trip last_conversation_id", () => {

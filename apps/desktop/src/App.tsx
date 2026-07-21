@@ -101,6 +101,22 @@ export function App() {
     }
   }
 
+  async function onFork(id: string): Promise<void> {
+    setError("");
+    setActionBusy(true);
+    try {
+      const forked = await api.forkConversation(id);
+      await refreshSidebar();
+      setSelectedId(forked.id);
+      setConversation(forked);
+      setDraft("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
   async function onDelete(id: string): Promise<void> {
     setError("");
     setActionBusy(true);
@@ -158,6 +174,7 @@ export function App() {
         selectedId={selectedId}
         onSelect={(id) => void selectConversation(id)}
         onNewChat={() => void onNewChat()}
+        onFork={(id) => void onFork(id)}
         onDelete={(id) => void onDelete(id)}
         busy={busy}
       />

@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld("api", {
   getConversation: (id) => ipcRenderer.invoke("chat:getConversation", id),
   sendMessage: (conversationId, text) =>
     ipcRenderer.invoke("chat:sendMessage", conversationId, text),
+  forkConversation: (id) => ipcRenderer.invoke("chat:forkConversation", id),
   deleteConversation: (id) =>
     ipcRenderer.invoke("chat:deleteConversation", id),
 });

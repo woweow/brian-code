@@ -244,6 +244,24 @@ export function createMockApi(): DesktopApi {
       return toDetail(conv);
     },
 
+    async forkConversation(id: string): Promise<ConversationDetail> {
+      await delay();
+      const source = conversations.find((c) => c.id === id);
+      if (!source) {
+        throw new Error("Conversation not found");
+      }
+      const forked: MockConversation = {
+        id: `conv-${crypto.randomUUID()}`,
+        workspaceId: source.workspaceId,
+        title: `${source.title} (copy)`,
+        turns: JSON.parse(JSON.stringify(source.turns)) as UiTurn[],
+        updatedAt: Date.now(),
+      };
+      conversations.unshift(forked);
+      lastConversationId = forked.id;
+      return toDetail(forked);
+    },
+
     async deleteConversation(id: string): Promise<void> {
       await delay();
       const idx = conversations.findIndex((c) => c.id === id);

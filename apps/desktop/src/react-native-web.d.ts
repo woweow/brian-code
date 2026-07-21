@@ -18,6 +18,7 @@ declare module "react-native-web" {
   export const View: ComponentType<{
     style?: StyleProp<RNStyle>;
     children?: ReactNode;
+    pointerEvents?: "auto" | "none" | "box-none" | "box-only";
   }>;
   export const Text: ComponentType<{
     style?: StyleProp<RNStyle>;
@@ -40,7 +41,11 @@ declare module "react-native-web" {
   export const Pressable: ComponentType<{
     style?: StyleProp<RNStyle | ((state: { pressed: boolean }) => RNStyle)>;
     onPress?: () => void;
+    onHoverIn?: () => void;
+    onHoverOut?: () => void;
     disabled?: boolean;
+    accessibilityLabel?: string;
+    accessibilityRole?: string;
     children?: ReactNode;
   }>;
   export const ScrollView: ForwardRefExoticComponent<

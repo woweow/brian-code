@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native-web";
 import type { SidebarPayload } from "./types.js";
 
@@ -6,8 +7,16 @@ type SidebarProps = {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onNewChat: () => void;
+  onFork: (id: string) => void;
   onDelete: (id: string) => void;
   busy: boolean;
+};
+
+type SidebarActionProps = {
+  label: string;
+  glyph: string;
+  onPress: () => void;
+  disabled: boolean;
 };
 
 function shortPath(folderPath: string): string {
@@ -18,11 +27,45 @@ function shortPath(folderPath: string): string {
   return `…/${parts.slice(-2).join("/")}`;
 }
 
+function SidebarAction({
+  label,
+  glyph,
+  onPress,
+  disabled,
+}: SidebarActionProps) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <View style={styles.actionWrap}>
+      <Pressable
+        accessibilityLabel={label}
+        accessibilityRole="button"
+        disabled={disabled}
+        onPress={onPress}
+        onHoverIn={() => setHovered(true)}
+        onHoverOut={() => setHovered(false)}
+        style={
+          hovered
+            ? [styles.actionPress, styles.actionPressHovered]
+            : styles.actionPress
+        }
+      >
+        <Text style={styles.actionText}>{glyph}</Text>
+      </Pressable>
+      {hovered ? (
+        <View style={styles.tooltip} pointerEvents="none">
+          <Text style={styles.tooltipText}>{label}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 export function Sidebar({
   sidebar,
   selectedId,
   onSelect,
   onNewChat,
+  onFork,
   onDelete,
   busy,
 }: SidebarProps) {
@@ -71,13 +114,18 @@ export function Sidebar({
                         {conv.title}
                       </Text>
                     </Pressable>
-                    <Pressable
-                      style={styles.deletePress}
+                    <SidebarAction
+                      label="Fork conversation"
+                      glyph="⑂"
+                      onPress={() => onFork(conv.id)}
+                      disabled={busy}
+                    />
+                    <SidebarAction
+                      label="Delete conversation"
+                      glyph="×"
                       onPress={() => onDelete(conv.id)}
                       disabled={busy}
-                    >
-                      <Text style={styles.deleteText}>×</Text>
-                    </Pressable>
+                    />
                   </View>
                 );
               })}
@@ -162,13 +210,40 @@ const styles = StyleSheet.create({
     color: "#fafafa",
     fontWeight: "600",
   },
-  deletePress: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+  actionWrap: {
+    position: "relative",
+    marginRight: 2,
   },
-  deleteText: {
-    color: "#737373",
-    fontSize: 16,
+  actionPress: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionPressHovered: {
+    backgroundColor: "#3a3a3a",
+  },
+  actionText: {
+    color: "#a3a3a3",
+    fontSize: 14,
     lineHeight: 16,
+  },
+  tooltip: {
+    position: "absolute",
+    top: 32,
+    right: 0,
+    backgroundColor: "#1a1a1a",
+    borderWidth: 1,
+    borderColor: "#3a3a3a",
+    borderRadius: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    zIndex: 20,
+    whiteSpace: "nowrap",
+  },
+  tooltipText: {
+    color: "#e5e5e5",
+    fontSize: 11,
   },
 });

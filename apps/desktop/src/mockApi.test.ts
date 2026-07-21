@@ -64,4 +64,23 @@ describe("createMockApi", () => {
     const gone = await api.getConversation("conv-agent-loop");
     expect(gone).toBeNull();
   });
+
+  it("forks a conversation into a new sidebar entry", async () => {
+    const api = createMockApi();
+    const source = await api.getConversation("conv-agent-loop");
+    expect(source).not.toBeNull();
+    const forked = await api.forkConversation("conv-agent-loop");
+    expect(forked.id).not.toBe("conv-agent-loop");
+    expect(forked.title).toBe("Agent loop design (copy)");
+    expect(forked.turns).toEqual(source!.turns);
+    expect(forked.workspaceId).toBe(source!.workspaceId);
+    const sidebar = await api.listSidebar();
+    const ids = sidebar.groups.flatMap((g) =>
+      g.conversations.map((c) => c.id),
+    );
+    expect(ids).toContain("conv-agent-loop");
+    expect(ids).toContain(forked.id);
+    const boot = await api.getBootstrap();
+    expect(boot.lastConversationId).toBe(forked.id);
+  });
 });

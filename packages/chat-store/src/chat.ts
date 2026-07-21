@@ -166,6 +166,31 @@ export function updateConversationTranscript(
   };
 }
 
+export function forkConversation(db: ChatDb, sourceId: string): Conversation {
+  const source = getConversation(db, sourceId);
+  if (!source) {
+    throw new Error(`Conversation not found: ${sourceId}`);
+  }
+  const id = randomUUID();
+  const now = Date.now();
+  const baseTitle = source.title ?? "New chat";
+  const title = `${baseTitle} (copy)`;
+  const transcript = JSON.parse(JSON.stringify(source.transcript)) as unknown[];
+  db.prepare(
+    `INSERT INTO conversations
+      (id, workspace_id, title, model_transcript, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+  ).run(id, source.workspaceId, title, JSON.stringify(transcript), now, now);
+  return {
+    id,
+    workspaceId: source.workspaceId,
+    title,
+    transcript,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export function deleteConversation(db: ChatDb, id: string): void {
   const row = db
     .prepare(`SELECT workspace_id AS workspaceId FROM conversations WHERE id = ?`)

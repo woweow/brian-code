@@ -43,5 +43,6 @@ export type DesktopApi = {
     conversationId: string,
     text: string,
   ) => Promise<ConversationDetail>;
+  forkConversation: (id: string) => Promise<ConversationDetail>;
   deleteConversation: (id: string) => Promise<void>;
 };

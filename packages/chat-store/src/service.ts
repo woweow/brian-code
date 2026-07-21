@@ -4,6 +4,7 @@ import {
   createConversation,
   deleteConversation,
   findOrCreateWorkspace,
+  forkConversation,
   getConversation,
   getMeta,
   listConversationsForSidebar,
@@ -182,6 +183,21 @@ export async function sendMessage(
   );
   setMeta(db, LAST_CONVERSATION_ID_KEY, conversationId);
   return toDetail(updated, workspace.folderPath);
+}
+
+export function forkConversationDetail(
+  db: ChatDb,
+  sourceId: string,
+): ConversationDetail {
+  const conversation = forkConversation(db, sourceId);
+  const workspace = getWorkspace(db, conversation.workspaceId);
+  if (!workspace) {
+    throw new Error(
+      `Workspace not found for conversation: ${conversation.id}`,
+    );
+  }
+  setMeta(db, LAST_CONVERSATION_ID_KEY, conversation.id);
+  return toDetail(conversation, workspace.folderPath);
 }
 
 export function deleteConversationAndMaybeWorkspace(
