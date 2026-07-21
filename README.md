@@ -1,6 +1,6 @@
 # brian-code
 
-Local agent (OpenAI + tools) with a thin CLI and an Electron desktop UI (React Native Web). One desktop app: the UI talks to the agent over Electron IPC, not HTTP.
+Local multi-turn agent (OpenAI + tools) with a ChatGPT-like Electron desktop shell and a headless chat CLI for verification. Conversations live in SQLite; each conversation belongs to a workspace folder on disk.
 
 ## Setup
 
@@ -18,66 +18,76 @@ npm install
 
 ## Commands
 
-**Run the agent from the terminal:**
+**One-shot agent** (no persistence):
 
 ```bash
 npm run agent -- "Use your available tools to create a person."
 ```
 
-**Headless chat CLI** (SQLite at `BRIAN_CODE_DB` or `~/.brian-code/dev.sqlite`):
+**Headless chat CLI** — exercises the same store + agent path as desktop. DB path: `BRIAN_CODE_DB` or `~/.brian-code/dev.sqlite`.
 
 ```bash
-npm run chat -- new --folder /path/to/workspace
-npm run chat -- list
-npm run chat -- show <conversation-id>
-npm run chat -- send <conversation-id> "Hello"
-npm run chat -- delete <conversation-id>
+BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- new --folder /tmp
+BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- list
+BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- send <conversation-id> "Hello"
+BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- show <conversation-id>
+BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- delete <conversation-id>
 ```
 
-**Run the desktop app** (build renderer + Electron, then launch):
+**Desktop app** (real folder picker + IPC + SQLite under Electron `userData`/`brian-code.sqlite`):
 
 ```bash
 npm run desktop
-```
-
-**Dev desktop** (Vite HMR + Electron; optional):
-
-```bash
+# or with Vite HMR:
 npm run desktop:dev
 ```
 
-**UI in the browser only** (layout preview; Submit cannot reach the agent without Electron IPC):
+**UI browser preview** (layout + mock data only — no real agent/IPC):
 
 ```bash
 npm run ui:dev
 ```
 
-Then open [http://localhost:5173](http://localhost:5173). Use `npm run desktop` or `desktop:dev` when you need a real agent response.
+Open [http://localhost:5173](http://localhost:5173). Use `desktop` / `desktop:dev` for real conversations.
 
-**Tests:**
+**Tests / typecheck:**
 
 ```bash
 npm test
-```
-
-**Typecheck:**
-
-```bash
 npm run typecheck
 ```
+
+## Data model
+
+- **Workspace** — unique absolute `folderPath` (find-or-create on New)
+- **Conversation** — belongs to a workspace; stores `model_transcript` (full OpenAI Responses item list) for resume
+- **UI** — `projectTranscript` emits user + final assistant text only (tools stored, not shown yet)
+- Persist only after a successful agent turn; fail send if the workspace folder is missing
 
 ## Repository layout
 
 ```
-packages/agent/       @brian-code/agent — multi-turn runAgent (+ transcript), OpenAI client, tools/
-packages/chat-store/  @brian-code/chat-store — SQLite workspaces, conversations, UI transcript projector
-apps/cli/             Terminal entrypoints (agent one-shot + chat CRUD)
-apps/desktop/         Electron main/preload + RN Web UI (Vite)
+packages/agent/       @brian-code/agent — multi-turn runAgent (+ transcript), tools/
+packages/chat-store/  @brian-code/chat-store — SQLite, service helpers, projector
+apps/cli/             agent one-shot + chat CRUD CLI
+apps/desktop/         Electron main/preload + RN Web ChatGPT-like shell
 ```
 
-The desktop **main process** opens SQLite under Electron `userData` (`brian-code.sqlite`), wires chat IPC to `@brian-code/chat-store`, and runs multi-turn `runAgent` on `sendMessage`. Preload exposes `window.api` (`pickFolder`, `listSidebar`, `getBootstrap`, `createConversation`, `getConversation`, `sendMessage`, `deleteConversation`). Browser-only `ui:dev` uses the mock API instead.
+Desktop main opens SQLite, exposes `window.api` (`pickFolder`, `listSidebar`, `getBootstrap`, `createConversation`, `getConversation`, `sendMessage`, `deleteConversation`), and calls multi-turn `runAgent` on send.
 
-If `better-sqlite3` fails to load in Electron after install, rebuild native bindings for the Electron ABI (e.g. `npx electron-rebuild -f -w better-sqlite3` from the repo root).
+## better-sqlite3 + Electron
+
+`better-sqlite3` is a native module. Node and Electron use different ABIs. If Electron fails to load the DB:
+
+```bash
+npx @electron/rebuild -f -w better-sqlite3
+```
+
+After desktop work, restore the Node build for CLI/tests:
+
+```bash
+npm rebuild better-sqlite3
+```
 
 ## Adding a tool
 
