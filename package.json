@@ -2,19 +2,23 @@
   "name": "brian-code",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
-    "agent": "tsx src/cli.ts",
-    "test": "vitest run"
+    "agent": "tsx apps/cli/src/cli.ts",
+    "desktop": "npm run build -w @brian-code/desktop && npm run start -w @brian-code/desktop",
+    "desktop:dev": "DESKTOP_DEV=1 npm run build:electron -w @brian-code/desktop && concurrently \"npm run dev:renderer -w @brian-code/desktop\" \"DESKTOP_DEV=1 npm run start -w @brian-code/desktop\"",
+    "ui:dev": "npm run dev:renderer -w @brian-code/desktop",
+    "test": "npm run test -w @brian-code/agent",
+    "typecheck": "npm run build -w @brian-code/agent && tsc -p apps/cli --noEmit && tsc -p apps/desktop --noEmit && tsc -p apps/desktop/tsconfig.electron.json --noEmit"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "concurrently": "^9.1.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
-  },
-  "dependencies": {
-    "dotenv": "^16.4.7",
-    "openai": "^4.77.0",
-    "zod": "^3.24.1"
   }
 }

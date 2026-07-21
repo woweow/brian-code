@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { getFirstNameTool } from "../tools/get-first-name.js";
-import { getAgeTool } from "../tools/get-age.js";
+import { getFirstNameTool } from "./get-first-name.js";
+import { getAgeTool } from "./get-age.js";
 
 describe("getFirstNameTool", () => {
   it("returns Alex as firstName", async () => {
@@ -26,7 +26,7 @@ describe("getAgeTool", () => {
 
 describe("toolDefinitions registry", () => {
   it("includes both person tools", async () => {
-    const { toolDefinitions, toolExecutors } = await import("../tools/index.js");
+    const { toolDefinitions, toolExecutors } = await import("./index.js");
     const names = toolDefinitions.map((d) => d.name).sort();
     expect(names).toEqual(["get_age", "get_first_name"]);
     expect(typeof toolExecutors.get_first_name).toBe("function");

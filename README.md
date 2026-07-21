@@ -1,10 +1,10 @@
 # brian-code
 
-Headless OpenAI agent you run from the terminal. Tools live as individual files under `tools/`; register new tools in [`tools/index.ts`](tools/index.ts).
+Local agent (OpenAI + tools) with a thin CLI and an Electron desktop UI (React Native Web). One desktop app: the UI talks to the agent over Electron IPC, not HTTP.
 
 ## Setup
 
-1. Create a `.env` file in the project root (already gitignored):
+1. Create a `.env` file in the project root (gitignored):
 
 ```bash
 OPENAI_API_KEY=your-key-here
@@ -18,13 +18,31 @@ npm install
 
 ## Commands
 
-**Run the agent** with a prompt:
+**Run the agent from the terminal:**
 
 ```bash
 npm run agent -- "Use your available tools to create a person."
 ```
 
-You should see debug logs from `[getFirstName]` and `[getAge]` when the model calls those tools, then a final response under `--- Response ---`.
+**Run the desktop app** (build renderer + Electron, then launch):
+
+```bash
+npm run desktop
+```
+
+**Dev desktop** (Vite HMR + Electron; optional):
+
+```bash
+npm run desktop:dev
+```
+
+**UI in the browser only** (layout preview; Submit cannot reach the agent without Electron IPC):
+
+```bash
+npm run ui:dev
+```
+
+Then open [http://localhost:5173](http://localhost:5173). Use `npm run desktop` or `desktop:dev` when you need a real agent response.
 
 **Tests:**
 
@@ -32,9 +50,25 @@ You should see debug logs from `[getFirstName]` and `[getAge]` when the model ca
 npm test
 ```
 
+**Typecheck:**
+
+```bash
+npm run typecheck
+```
+
+## Repository layout
+
+```
+packages/agent/     @brian-code/agent — runAgent, OpenAI client, tools/
+apps/cli/           Terminal entrypoint
+apps/desktop/       Electron main/preload + RN Web UI (Vite)
+```
+
+The desktop **main process** loads `.env`, calls `runAgent` from `@brian-code/agent`, and exposes `window.api.runAgent` via preload IPC. Future local capabilities (bash, file edits) belong in the main process, not the renderer.
+
 ## Adding a tool
 
-1. Add a new file under `tools/` (export an `AgentTool` with `definition` + `execute`).
-2. Import it in [`tools/index.ts`](tools/index.ts) and append it to `registeredTools`.
+1. Add a file under `packages/agent/tools/` (`AgentTool` with `definition` + `execute`).
+2. Register it in `packages/agent/tools/index.ts`.
 
-Model is fixed to `gpt-5.4-mini` in [`src/openai-client.ts`](src/openai-client.ts).
+Model is fixed to `gpt-5.4-mini` in `packages/agent/src/openai-client.ts`.

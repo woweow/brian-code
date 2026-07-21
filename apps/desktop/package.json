@@ -1,0 +1,30 @@
+{
+  "name": "@brian-code/desktop",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "dependencies": {
+    "@brian-code/agent": "*",
+    "dotenv": "^16.4.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-native-web": "^0.19.13"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.2.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
+  },
+  "scripts": {
+    "build:renderer": "vite build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build": "npm run build -w @brian-code/agent && npm run build:renderer && npm run build:electron",
+    "dev:renderer": "vite",
+    "start": "npm run build:electron && electron .",
+    "desktop": "npm run build && electron ."
+  }
+}

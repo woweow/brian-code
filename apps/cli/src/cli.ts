@@ -1,5 +1,10 @@
-import "dotenv/config";
-import { runAgent } from "./agent.js";
+import { config } from "dotenv";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { runAgent } from "@brian-code/agent";
+
+const repoRoot = resolve(fileURLToPath(new URL(".", import.meta.url)), "../../..");
+config({ path: resolve(repoRoot, ".env") });
 
 const prompt = process.argv.slice(2).join(" ").trim();
 

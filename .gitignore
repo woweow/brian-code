@@ -1,2 +1,16 @@
 .env
+.env.local
+.env.*.local
+
 node_modules/
+
+# TypeScript / Vite / Electron build outputs
+dist/
+dist-electron/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*

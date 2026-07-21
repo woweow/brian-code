@@ -10,12 +10,10 @@
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"]
   },
-  "files": [],
-  "references": [
-    { "path": "./packages/agent" },
-    { "path": "./apps/cli" },
-    { "path": "./apps/desktop" }
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
