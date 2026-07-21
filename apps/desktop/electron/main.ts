@@ -10,6 +10,7 @@ import {
   deleteConversationAndMaybeWorkspace,
   forkConversationDetail,
   getBootstrap,
+  getContextUsage,
   getConversationDetail,
   openDb,
   sendMessage,
@@ -163,6 +164,13 @@ function registerIpcHandlers(): void {
       throw new Error("id must be a non-empty string");
     }
     deleteConversationAndMaybeWorkspace(requireDb(), id.trim());
+  });
+
+  ipcMain.handle("chat:getContextUsage", async (_event, id: unknown) => {
+    if (typeof id !== "string" || id.trim() === "") {
+      throw new Error("id must be a non-empty string");
+    }
+    return getContextUsage(requireDb(), id.trim());
   });
 }
 

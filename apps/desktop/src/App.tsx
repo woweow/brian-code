@@ -2,12 +2,17 @@ import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native-web";
 import { getDesktopApi, isUsingMockApi } from "./api.js";
 import { Composer } from "./Composer.js";
+import { ContextInspector } from "./ContextInspector.js";
 import { shouldShowComposer } from "./composerKeys.js";
 import { appendOptimisticUserTurn } from "./optimisticSend.js";
 import { applyOptimisticRewrite } from "./optimisticRewrite.js";
 import { Sidebar } from "./Sidebar.js";
 import { Thread } from "./Thread.js";
-import type { ConversationDetail, SidebarPayload } from "./types.js";
+import type {
+  ContextUsage,
+  ConversationDetail,
+  SidebarPayload,
+} from "./types.js";
 
 export function App() {
   const api = getDesktopApi();
@@ -21,6 +26,7 @@ export function App() {
   const [sending, setSending] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState("");
+  const [contextUsage, setContextUsage] = useState<ContextUsage | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,6 +66,22 @@ export function App() {
       cancelled = true;
     };
   }, [api]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedId) {
+      setContextUsage(null);
+      return;
+    }
+    void api.getContextUsage(selectedId).then((usage) => {
+      if (!cancelled) {
+        setContextUsage(usage);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, selectedId, conversation?.updatedAt]);
 
   async function refreshSidebar(): Promise<void> {
     const next = await api.listSidebar();
@@ -221,13 +243,16 @@ export function App() {
           onRewrite={(turnIndex, text) => void onRewrite(turnIndex, text)}
         />
         {showComposer ? (
-          <Composer
-            value={draft}
-            onChange={setDraft}
-            onSend={() => void onSend()}
-            disabled={!selectedId || busy}
-            locked={sending}
-          />
+          <>
+            <ContextInspector usage={contextUsage} />
+            <Composer
+              value={draft}
+              onChange={setDraft}
+              onSend={() => void onSend()}
+              disabled={!selectedId || busy}
+              locked={sending}
+            />
+          </>
         ) : null}
       </View>
     </View>

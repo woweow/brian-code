@@ -24,10 +24,20 @@ export {
   type UiTurn,
 } from "./project.js";
 export {
+  CONTEXT_TOKEN_BUDGET,
+  estimateTokens,
+  formatTokenCount,
+  inspectContextUsage,
+  type ContextCategory,
+  type ContextUsage,
+  type ContextUsageBucket,
+} from "./contextUsage.js";
+export {
   LAST_CONVERSATION_ID_KEY,
   buildSidebarPayload,
   createConversationInFolder,
   getConversationDetail,
+  getContextUsage,
   sendMessage,
   forkConversationDetail,
   rewriteMessage,

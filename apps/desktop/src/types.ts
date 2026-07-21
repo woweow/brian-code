@@ -28,6 +28,21 @@ export type ConversationDetail = {
   updatedAt: number;
 };
 
+export type ContextCategory = "conversation" | "toolCalls" | "other";
+
+export type ContextUsageBucket = {
+  category: ContextCategory;
+  label: string;
+  tokens: number;
+};
+
+export type ContextUsage = {
+  totalTokens: number;
+  budgetTokens: number;
+  fillRatio: number;
+  buckets: ContextUsageBucket[];
+};
+
 export type BootstrapPayload = {
   lastConversationId: string | null;
   sidebar: SidebarPayload;
@@ -50,4 +65,5 @@ export type DesktopApi = {
     text: string,
   ) => Promise<ConversationDetail>;
   deleteConversation: (id: string) => Promise<void>;
+  getContextUsage: (id: string) => Promise<ContextUsage | null>;
 };

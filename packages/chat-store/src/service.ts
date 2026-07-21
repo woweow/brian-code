@@ -14,6 +14,10 @@ import {
   type Workspace,
 } from "./chat.js";
 import {
+  inspectContextUsage,
+  type ContextUsage,
+} from "./contextUsage.js";
+import {
   projectTranscript,
   transcriptPrefixBeforeTurn,
   type UiTurn,
@@ -275,4 +279,16 @@ export function getBootstrap(db: ChatDb): BootstrapPayload {
     lastConversationId: getMeta(db, LAST_CONVERSATION_ID_KEY),
     sidebar: buildSidebarPayload(db),
   };
+}
+
+/** On-demand token estimate from the stored model transcript. */
+export function getContextUsage(
+  db: ChatDb,
+  id: string,
+): ContextUsage | null {
+  const conversation = getConversation(db, id);
+  if (!conversation) {
+    return null;
+  }
+  return inspectContextUsage(conversation.transcript);
 }

@@ -76,7 +76,12 @@ apps/cli/             agent one-shot + chat CRUD CLI
 apps/desktop/         Electron main/preload + RN Web ChatGPT-like shell
 ```
 
-Desktop main opens SQLite, exposes `window.api` (`pickFolder`, `listSidebar`, `getBootstrap`, `createConversation`, `getConversation`, `sendMessage`, `rewriteMessage`, `forkConversation`, `deleteConversation`), and calls multi-turn `runAgent` on send/rewrite.
+Desktop main opens SQLite, exposes `window.api` (`pickFolder`, `listSidebar`, `getBootstrap`, `createConversation`, `getConversation`, `sendMessage`, `rewriteMessage`, `forkConversation`, `deleteConversation`, `getContextUsage`), and calls multi-turn `runAgent` on send/rewrite.
+
+## Context inspector
+
+A hollow ring above the composer (bottom-right) estimates how much of a 200k soft budget the current conversation uses. Click it for an on-demand breakdown (conversation text vs tool calls vs other). Estimates come from the stored `model_transcript` (~4 chars/token) — nothing is written back into the transcript, and OpenAI usage totals are not required.
+
 ## better-sqlite3 + Electron
 
 `better-sqlite3` is a native module (Node ABI ≠ Electron ABI). `npm run desktop` / `desktop:dev` rebuild it for Electron automatically. `npm test` rebuilds it for Node first.

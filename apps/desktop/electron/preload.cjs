@@ -14,4 +14,5 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.invoke("chat:rewriteMessage", conversationId, turnIndex, text),
   deleteConversation: (id) =>
     ipcRenderer.invoke("chat:deleteConversation", id),
+  getContextUsage: (id) => ipcRenderer.invoke("chat:getContextUsage", id),
 });

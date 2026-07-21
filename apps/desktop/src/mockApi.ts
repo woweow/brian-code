@@ -1,5 +1,6 @@
 import type {
   BootstrapPayload,
+  ContextUsage,
   ConversationDetail,
   DesktopApi,
   SidebarPayload,
@@ -321,6 +322,45 @@ export function createMockApi(): DesktopApi {
       if (lastConversationId === id) {
         lastConversationId = conversations[0]?.id ?? null;
       }
+    },
+
+    async getContextUsage(id: string): Promise<ContextUsage | null> {
+      await delay();
+      const conv = conversations.find((c) => c.id === id);
+      if (!conv) {
+        return null;
+      }
+      const conversationTokens = conv.turns.reduce(
+        (sum, turn) => sum + Math.ceil(turn.text.trim().length / 4),
+        0,
+      );
+      const toolCalls = Math.max(
+        0,
+        Math.floor(conversationTokens * 0.15),
+      );
+      const totalTokens = conversationTokens + toolCalls;
+      const budgetTokens = 200_000;
+      const buckets = [];
+      if (conversationTokens > 0) {
+        buckets.push({
+          category: "conversation" as const,
+          label: "Conversation",
+          tokens: conversationTokens,
+        });
+      }
+      if (toolCalls > 0) {
+        buckets.push({
+          category: "toolCalls" as const,
+          label: "Tool calls",
+          tokens: toolCalls,
+        });
+      }
+      return {
+        totalTokens,
+        budgetTokens,
+        fillRatio: Math.min(1, totalTokens / budgetTokens),
+        buckets,
+      };
     },
   };
 }
