@@ -9,10 +9,12 @@
   "scripts": {
     "agent": "tsx apps/cli/src/cli.ts",
     "chat": "tsx apps/cli/src/chat-cli.ts",
-    "desktop": "npm run build -w @brian-code/desktop && npm run start -w @brian-code/desktop",
-    "desktop:dev": "DESKTOP_DEV=1 npm run build:electron -w @brian-code/desktop && concurrently \"npm run dev:renderer -w @brian-code/desktop\" \"DESKTOP_DEV=1 npm run start -w @brian-code/desktop\"",
+    "desktop": "npm run rebuild:native:electron && npm run build -w @brian-code/desktop && npm run start -w @brian-code/desktop",
+    "desktop:dev": "npm run rebuild:native:electron && DESKTOP_DEV=1 npm run build:electron -w @brian-code/desktop && concurrently \"npm run dev:renderer -w @brian-code/desktop\" \"DESKTOP_DEV=1 npm run start -w @brian-code/desktop\"",
+    "rebuild:native:electron": "npx @electron/rebuild -f -w better-sqlite3",
+    "rebuild:native:node": "npm rebuild better-sqlite3",
     "ui:dev": "npm run dev:renderer -w @brian-code/desktop",
-    "test": "npm run test -w @brian-code/agent && npm run test -w @brian-code/chat-store",
+    "test": "npm run rebuild:native:node && npm run test -w @brian-code/agent && npm run test -w @brian-code/chat-store",
     "typecheck": "npm run build -w @brian-code/agent && npm run build -w @brian-code/chat-store && tsc -p apps/cli --noEmit && tsc -p apps/desktop --noEmit && tsc -p apps/desktop/tsconfig.electron.json --noEmit"
   },
   "devDependencies": {
