@@ -262,6 +262,43 @@ export function createMockApi(): DesktopApi {
       return toDetail(forked);
     },
 
+    async rewriteMessage(
+      conversationId: string,
+      turnIndex: number,
+      text: string,
+    ): Promise<ConversationDetail> {
+      await delay(200);
+      const conv = conversations.find((c) => c.id === conversationId);
+      if (!conv) {
+        throw new Error("Conversation not found");
+      }
+      const trimmed = text.trim();
+      if (!trimmed) {
+        throw new Error("Message cannot be empty");
+      }
+      if (!Number.isInteger(turnIndex) || turnIndex < 0) {
+        throw new Error(`Invalid turn index: ${turnIndex}`);
+      }
+      const target = conv.turns[turnIndex];
+      if (!target) {
+        throw new Error(`Turn index out of range: ${turnIndex}`);
+      }
+      if (target.role !== "user") {
+        throw new Error(`Turn ${turnIndex} is not a user message`);
+      }
+      if (turnIndex === 0) {
+        conv.title = truncateTitle(trimmed);
+      }
+      conv.turns = [
+        ...conv.turns.slice(0, turnIndex),
+        { role: "user", text: trimmed },
+        { role: "assistant", text: `Mock reply to: ${trimmed}` },
+      ];
+      conv.updatedAt = Date.now();
+      lastConversationId = conv.id;
+      return toDetail(conv);
+    },
+
     async deleteConversation(id: string): Promise<void> {
       await delay();
       const idx = conversations.findIndex((c) => c.id === id);

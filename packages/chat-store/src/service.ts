@@ -13,7 +13,11 @@ import {
   type Conversation,
   type Workspace,
 } from "./chat.js";
-import { projectTranscript, type UiTurn } from "./project.js";
+import {
+  projectTranscript,
+  transcriptPrefixBeforeTurn,
+  type UiTurn,
+} from "./project.js";
 
 export const LAST_CONVERSATION_ID_KEY = "last_conversation_id";
 
@@ -198,6 +202,55 @@ export function forkConversationDetail(
   }
   setMeta(db, LAST_CONVERSATION_ID_KEY, conversation.id);
   return toDetail(conversation, workspace.folderPath);
+}
+
+/**
+ * Truncate history to everything above the UI turn at `turnIndex`, then
+ * treat `text` as a brand-new user message (re-run agent). Persist only
+ * on success. Retitle when rewriting the first message (empty prefix).
+ */
+export async function rewriteMessage(
+  db: ChatDb,
+  conversationId: string,
+  turnIndex: number,
+  text: string,
+  runAgent: RunAgentFn,
+): Promise<ConversationDetail> {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error("Message cannot be empty");
+  }
+  const conversation = getConversation(db, conversationId);
+  if (!conversation) {
+    throw new Error(`Conversation not found: ${conversationId}`);
+  }
+  const workspace = getWorkspace(db, conversation.workspaceId);
+  if (!workspace) {
+    throw new Error(`Workspace not found for conversation: ${conversationId}`);
+  }
+  if (!existsSync(workspace.folderPath)) {
+    throw new Error(
+      `Workspace folder does not exist on disk: ${workspace.folderPath}`,
+    );
+  }
+  const prefix = transcriptPrefixBeforeTurn(
+    conversation.transcript,
+    turnIndex,
+  );
+  const result = await runAgent(trimmed, {
+    transcript: prefix,
+    workspaceRoot: workspace.folderPath,
+  });
+  const title =
+    prefix.length === 0 ? truncateTitle(trimmed) : undefined;
+  const updated = updateConversationTranscript(
+    db,
+    conversationId,
+    result.updatedTranscript,
+    title !== undefined ? { title } : undefined,
+  );
+  setMeta(db, LAST_CONVERSATION_ID_KEY, conversationId);
+  return toDetail(updated, workspace.folderPath);
 }
 
 export function deleteConversationAndMaybeWorkspace(

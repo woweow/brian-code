@@ -30,6 +30,7 @@ npm run agent -- "Use your available tools to create a person."
 BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- new --folder /tmp
 BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- list
 BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- send <conversation-id> "Hello"
+BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- rewrite <conversation-id> 0 "Edited hello"
 BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- show <conversation-id>
 BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- fork <conversation-id>
 BRIAN_CODE_DB=/tmp/brian-test.sqlite npm run chat -- delete <conversation-id>
@@ -49,7 +50,7 @@ npm run desktop:dev
 npm run ui:dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). Use `desktop` / `desktop:dev` for real conversations. The composer is hidden until a chat is selected; Enter sends (Shift+Enter for a newline). Sidebar and thread scroll independently. While waiting on a reply, the composer locks and `apps/desktop/src/assets/loading-image.png` plays beside the status line.
+Open [http://localhost:5173](http://localhost:5173). Use `desktop` / `desktop:dev` for real conversations. The composer is hidden until a chat is selected; Enter sends (Shift+Enter for a newline). Sidebar and thread scroll independently. While waiting on a reply, the composer locks and `apps/desktop/src/assets/loading-image.png` plays beside the status line. Click the pencil next to a user message to edit it inline; Enter rewrites from that point (truncates later turns in the DB and re-runs the agent). Escape or clicking away cancels the edit.
 
 **Tests / typecheck:**
 
@@ -64,6 +65,7 @@ npm run typecheck
 - **Conversation** — belongs to a workspace; stores `model_transcript` (full OpenAI Responses item list) for resume
 - **UI** — `projectTranscript` emits user + final assistant text only (tools stored, not shown yet)
 - Persist only after a successful agent turn; fail send if the workspace folder is missing
+- **Edit / rollback** — rewrite a user turn truncates `model_transcript` to everything above that UI turn, then appends the edited text as a new agent turn (later history is discarded)
 
 ## Repository layout
 
@@ -74,8 +76,7 @@ apps/cli/             agent one-shot + chat CRUD CLI
 apps/desktop/         Electron main/preload + RN Web ChatGPT-like shell
 ```
 
-Desktop main opens SQLite, exposes `window.api` (`pickFolder`, `listSidebar`, `getBootstrap`, `createConversation`, `getConversation`, `sendMessage`, `forkConversation`, `deleteConversation`), and calls multi-turn `runAgent` on send.
-
+Desktop main opens SQLite, exposes `window.api` (`pickFolder`, `listSidebar`, `getBootstrap`, `createConversation`, `getConversation`, `sendMessage`, `rewriteMessage`, `forkConversation`, `deleteConversation`), and calls multi-turn `runAgent` on send/rewrite.
 ## better-sqlite3 + Electron
 
 `better-sqlite3` is a native module (Node ABI ≠ Electron ABI). `npm run desktop` / `desktop:dev` rebuild it for Electron automatically. `npm test` rebuilds it for Node first.

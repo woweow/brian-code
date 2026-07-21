@@ -13,6 +13,7 @@ import {
   getConversationDetail,
   openDb,
   sendMessage,
+  rewriteMessage,
   type ChatDb,
 } from "@brian-code/chat-store";
 
@@ -125,6 +126,37 @@ function registerIpcHandlers(): void {
     }
     return forkConversationDetail(requireDb(), id.trim());
   });
+
+  ipcMain.handle(
+    "chat:rewriteMessage",
+    async (
+      _event,
+      conversationId: unknown,
+      turnIndex: unknown,
+      text: unknown,
+    ) => {
+      if (typeof conversationId !== "string" || conversationId.trim() === "") {
+        throw new Error("conversationId must be a non-empty string");
+      }
+      if (typeof turnIndex !== "number" || !Number.isInteger(turnIndex)) {
+        throw new Error("turnIndex must be an integer");
+      }
+      if (typeof text !== "string") {
+        throw new Error("text must be a string");
+      }
+      return rewriteMessage(
+        requireDb(),
+        conversationId.trim(),
+        turnIndex,
+        text,
+        async (prompt, options) =>
+          runAgent(prompt, {
+            transcript: options?.transcript as AgentRunOptions["transcript"],
+            workspaceRoot: options?.workspaceRoot,
+          }),
+      );
+    },
+  );
 
   ipcMain.handle("chat:deleteConversation", async (_event, id: unknown) => {
     if (typeof id !== "string" || id.trim() === "") {

@@ -39,6 +39,23 @@ describe("createMockApi", () => {
     expect(updated.turns.at(-1)?.role).toBe("assistant");
   });
 
+  it("rewrites a user turn and drops later turns", async () => {
+    const api = createMockApi();
+    const before = await api.getConversation("conv-agent-loop");
+    expect(before).not.toBeNull();
+    expect(before!.turns.length).toBeGreaterThanOrEqual(4);
+    const updated = await api.rewriteMessage(
+      "conv-agent-loop",
+      0,
+      "edited opener",
+    );
+    expect(updated.turns).toEqual([
+      { role: "user", text: "edited opener" },
+      { role: "assistant", text: "Mock reply to: edited opener" },
+    ]);
+    expect(updated.title).toBe("edited opener");
+  });
+
   it("titles an empty conversation from the first send", async () => {
     const api = createMockApi();
     const empty = await api.getConversation("conv-empty");

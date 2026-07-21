@@ -12,6 +12,7 @@ import {
   forkConversationDetail,
   getConversationDetail,
   openDb,
+  rewriteMessage,
   sendMessage,
   type RunAgentFn,
 } from "@brian-code/chat-store";
@@ -34,6 +35,7 @@ function usage(): never {
   npm run chat -- list
   npm run chat -- show <id>
   npm run chat -- send <id> <message...>
+  npm run chat -- rewrite <id> <turnIndex> <message...>
   npm run chat -- fork <id>
   npm run chat -- delete <id>`);
   process.exit(1);
@@ -94,6 +96,26 @@ async function main(): Promise<void> {
       const detail = await sendMessage(
         db,
         id,
+        message,
+        runAgent as RunAgentFn,
+      );
+      console.log(detail.turns.at(-1)?.text ?? "");
+      return;
+    }
+
+    if (command === "rewrite") {
+      const id = args[1]?.trim();
+      const turnRaw = args[2]?.trim();
+      const message = args.slice(3).join(" ").trim();
+      const turnIndex = turnRaw === undefined ? NaN : Number(turnRaw);
+      if (!id || !Number.isInteger(turnIndex) || !message) {
+        console.error("rewrite requires <id> <turnIndex> <message...>");
+        process.exit(1);
+      }
+      const detail = await rewriteMessage(
+        db,
+        id,
+        turnIndex,
         message,
         runAgent as RunAgentFn,
       );

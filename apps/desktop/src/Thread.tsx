@@ -1,11 +1,14 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
   type ScrollViewHandle,
 } from "react-native-web";
+import { isSendEnterKey } from "./composerKeys.js";
 import { WaitingMascot } from "./WaitingMascot.js";
 import type { ConversationDetail, UiTurn } from "./types.js";
 
@@ -15,10 +18,61 @@ type ThreadProps = {
   sending: boolean;
   error: string;
   hasSelection: boolean;
+  onRewrite: (turnIndex: number, text: string) => void;
 };
 
-function Bubble({ turn }: { turn: UiTurn }) {
+function Bubble({
+  turn,
+  index,
+  canEdit,
+  onRewrite,
+}: {
+  turn: UiTurn;
+  index: number;
+  canEdit: boolean;
+  onRewrite: (turnIndex: number, text: string) => void;
+}) {
   const isUser = turn.role === "user";
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(turn.text);
+
+  useEffect(() => {
+    if (!editing) {
+      setDraft(turn.text);
+    }
+  }, [turn.text, editing]);
+
+  function cancelEdit(): void {
+    setDraft(turn.text);
+    setEditing(false);
+  }
+
+  function submit(): void {
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      return;
+    }
+    setEditing(false);
+    onRewrite(index, trimmed);
+  }
+
+  function onKeyPress(event: {
+    key: string;
+    shiftKey: boolean;
+    preventDefault: () => void;
+  }): void {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cancelEdit();
+      return;
+    }
+    if (!isSendEnterKey(event.key, event.shiftKey)) {
+      return;
+    }
+    event.preventDefault();
+    submit();
+  }
+
   return (
     <View
       style={
@@ -35,8 +89,30 @@ function Bubble({ turn }: { turn: UiTurn }) {
         }
       >
         <Text style={styles.role}>{isUser ? "You" : "Assistant"}</Text>
-        <Text style={styles.bubbleText}>{turn.text}</Text>
+        {editing ? (
+          <TextInput
+            style={styles.editInput}
+            value={draft}
+            onChangeText={setDraft}
+            multiline
+            onBlur={cancelEdit}
+            onKeyPress={onKeyPress}
+          />
+        ) : (
+          <Text style={styles.bubbleText}>{turn.text}</Text>
+        )}
       </View>
+      {isUser && canEdit && !editing ? (
+        <Pressable
+          style={styles.editButton}
+          onPress={() => {
+            setDraft(turn.text);
+            setEditing(true);
+          }}
+        >
+          <Text style={styles.editIcon}>✎</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -47,6 +123,7 @@ export function Thread({
   sending,
   error,
   hasSelection,
+  onRewrite,
 }: ThreadProps) {
   const scrollRef = useRef<ScrollViewHandle | null>(null);
   const turnCount = conversation?.turns.length ?? 0;
@@ -114,7 +191,13 @@ export function Thread({
       ) : (
         <ScrollView ref={scrollRef} style={styles.scroll}>
           {conversation.turns.map((turn, index) => (
-            <Bubble key={`${turn.role}-${index}`} turn={turn} />
+            <Bubble
+              key={`${turn.role}-${index}`}
+              turn={turn}
+              index={index}
+              canEdit={!sending}
+              onRewrite={onRewrite}
+            />
           ))}
           {sending ? (
             <View style={styles.waitingRow}>
@@ -203,6 +286,8 @@ const styles = StyleSheet.create({
   bubbleRow: {
     marginBottom: 12,
     flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
   },
   bubbleRowUser: {
     justifyContent: "flex-end",
@@ -234,5 +319,23 @@ const styles = StyleSheet.create({
     color: "#f5f5f5",
     fontSize: 14,
     lineHeight: 21,
+  },
+  editInput: {
+    color: "#f5f5f5",
+    fontSize: 14,
+    lineHeight: 21,
+    minWidth: 180,
+    minHeight: 42,
+    padding: 0,
+    margin: 0,
+  },
+  editButton: {
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+    marginTop: 4,
+  },
+  editIcon: {
+    color: "#a3a3a3",
+    fontSize: 14,
   },
 });

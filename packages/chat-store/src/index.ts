@@ -18,7 +18,11 @@ export {
   type Conversation,
   type SidebarConversation,
 } from "./chat.js";
-export { projectTranscript, type UiTurn } from "./project.js";
+export {
+  projectTranscript,
+  transcriptPrefixBeforeTurn,
+  type UiTurn,
+} from "./project.js";
 export {
   LAST_CONVERSATION_ID_KEY,
   buildSidebarPayload,
@@ -26,6 +30,7 @@ export {
   getConversationDetail,
   sendMessage,
   forkConversationDetail,
+  rewriteMessage,
   deleteConversationAndMaybeWorkspace,
   getBootstrap,
   truncateTitle,

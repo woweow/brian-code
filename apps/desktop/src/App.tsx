@@ -4,6 +4,7 @@ import { getDesktopApi, isUsingMockApi } from "./api.js";
 import { Composer } from "./Composer.js";
 import { shouldShowComposer } from "./composerKeys.js";
 import { appendOptimisticUserTurn } from "./optimisticSend.js";
+import { applyOptimisticRewrite } from "./optimisticRewrite.js";
 import { Sidebar } from "./Sidebar.js";
 import { Thread } from "./Thread.js";
 import type { ConversationDetail, SidebarPayload } from "./types.js";
@@ -164,6 +165,32 @@ export function App() {
     }
   }
 
+  async function onRewrite(turnIndex: number, text: string): Promise<void> {
+    const trimmed = text.trim();
+    if (!selectedId || !trimmed || sending || actionBusy || !conversation) {
+      return;
+    }
+    const conversationId = selectedId;
+    const prior = conversation;
+    setSending(true);
+    setError("");
+    setConversation(applyOptimisticRewrite(prior, turnIndex, trimmed));
+    try {
+      const updated = await api.rewriteMessage(
+        conversationId,
+        turnIndex,
+        trimmed,
+      );
+      setConversation(updated);
+      await refreshSidebar();
+    } catch (err) {
+      setConversation(prior);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSending(false);
+    }
+  }
+
   const busy = loading || sending || actionBusy;
   const showComposer = shouldShowComposer(selectedId);
 
@@ -191,6 +218,7 @@ export function App() {
           sending={sending}
           error={error}
           hasSelection={selectedId !== null}
+          onRewrite={(turnIndex, text) => void onRewrite(turnIndex, text)}
         />
         {showComposer ? (
           <Composer

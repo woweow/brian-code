@@ -44,5 +44,10 @@ export type DesktopApi = {
     text: string,
   ) => Promise<ConversationDetail>;
   forkConversation: (id: string) => Promise<ConversationDetail>;
+  rewriteMessage: (
+    conversationId: string,
+    turnIndex: number,
+    text: string,
+  ) => Promise<ConversationDetail>;
   deleteConversation: (id: string) => Promise<void>;
 };

@@ -28,10 +28,11 @@ declare module "react-native-web" {
   export const TextInput: ComponentType<{
     style?: StyleProp<RNStyle>;
     value?: string;
-    onChangeText?: (text: string) => void;
+    onChangeText?: ((text: string) => void) | undefined;
     placeholder?: string;
     multiline?: boolean;
     editable?: boolean;
+    onBlur?: (() => void) | undefined;
     onKeyPress?: (event: {
       key: string;
       shiftKey: boolean;
