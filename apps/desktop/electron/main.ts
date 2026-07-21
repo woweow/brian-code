@@ -44,7 +44,10 @@ ipcMain.handle("agent:run", async (_event, prompt: unknown) => {
   if (typeof prompt !== "string" || prompt.trim() === "") {
     throw new Error("Prompt must be a non-empty string");
   }
-  return await runAgent(prompt.trim());
+  // Wave 1: runAgent now returns { finalText, updatedTranscript }.
+  // Wave 2 will wire multi-turn transcript through IPC.
+  const { finalText } = await runAgent(prompt.trim());
+  return finalText;
 });
 
 app.whenReady().then(() => {

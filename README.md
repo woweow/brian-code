@@ -59,7 +59,7 @@ npm run typecheck
 ## Repository layout
 
 ```
-packages/agent/     @brian-code/agent — runAgent, OpenAI client, tools/
+packages/agent/     @brian-code/agent — multi-turn runAgent (+ transcript), OpenAI client, tools/
 apps/cli/           Terminal entrypoint
 apps/desktop/       Electron main/preload + RN Web UI (Vite)
 ```

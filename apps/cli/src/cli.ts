@@ -16,9 +16,9 @@ if (!prompt) {
 console.log(`[cli] prompt: ${prompt}\n`);
 
 try {
-  const text = await runAgent(prompt);
+  const { finalText } = await runAgent(prompt);
   console.log("\n--- Response ---\n");
-  console.log(text);
+  console.log(finalText);
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
   console.error(`[cli] error: ${message}`);

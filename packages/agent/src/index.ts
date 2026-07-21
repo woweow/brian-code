@@ -1,1 +1,2 @@
-export { runAgent } from "./agent.js";
+export { runAgent, seedTranscript } from "./agent.js";
+export type { AgentRunOptions, AgentRunResult } from "./agent.js";

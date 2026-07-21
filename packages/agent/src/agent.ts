@@ -7,14 +7,30 @@ const MAX_STEPS = 10;
 const DEFAULT_INSTRUCTIONS =
   "You are a helpful assistant. When the user asks you to create or describe a person using your tools, call the relevant tools first, then summarize the result clearly.";
 
+export type AgentRunOptions = {
+  instructions?: string;
+  transcript?: OpenAI.Responses.ResponseInputItem[];
+};
+
+export type AgentRunResult = {
+  finalText: string;
+  updatedTranscript: OpenAI.Responses.ResponseInputItem[];
+};
+
+/** Copy transcript and append the user prompt without mutating the caller array. */
+export function seedTranscript(
+  prompt: string,
+  transcript: OpenAI.Responses.ResponseInputItem[] = [],
+): OpenAI.Responses.ResponseInputItem[] {
+  return [...transcript, { role: "user", content: prompt }];
+}
+
 export async function runAgent(
   prompt: string,
-  options?: { instructions?: string },
-): Promise<string> {
+  options?: AgentRunOptions,
+): Promise<AgentRunResult> {
   const openai = createOpenAIClient();
-  let input: OpenAI.Responses.ResponseInputItem[] = [
-    { role: "user", content: prompt },
-  ];
+  const input = seedTranscript(prompt, options?.transcript);
 
   for (let step = 0; step < MAX_STEPS; step++) {
     const response = await openai.responses.create({
@@ -32,7 +48,10 @@ export async function runAgent(
     );
 
     if (functionCalls.length === 0) {
-      return response.output_text ?? "";
+      return {
+        finalText: response.output_text ?? "",
+        updatedTranscript: input,
+      };
     }
 
     console.log(
