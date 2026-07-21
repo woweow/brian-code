@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native-web";
+import { isSendEnterKey } from "./composerKeys.js";
 
 type ComposerProps = {
   value: string;
@@ -17,6 +18,20 @@ export function Composer({
 }: ComposerProps) {
   const canSend = !disabled && value.trim().length > 0;
 
+  function onKeyPress(event: {
+    key: string;
+    shiftKey: boolean;
+    preventDefault: () => void;
+  }): void {
+    if (!isSendEnterKey(event.key, event.shiftKey)) {
+      return;
+    }
+    event.preventDefault();
+    if (canSend) {
+      onSend();
+    }
+  }
+
   return (
     <View style={styles.wrap}>
       <TextInput
@@ -26,6 +41,7 @@ export function Composer({
         placeholder={placeholder}
         multiline
         editable={!disabled}
+        onKeyPress={onKeyPress}
       />
       <Pressable
         style={canSend ? styles.send : [styles.send, styles.sendDisabled]}

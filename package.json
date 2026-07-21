@@ -14,7 +14,7 @@
     "rebuild:native:electron": "npx @electron/rebuild -f -w better-sqlite3",
     "rebuild:native:node": "npm rebuild better-sqlite3",
     "ui:dev": "npm run dev:renderer -w @brian-code/desktop",
-    "test": "npm run rebuild:native:node && npm run test -w @brian-code/agent && npm run test -w @brian-code/chat-store",
+    "test": "npm run rebuild:native:node && npm run test -w @brian-code/agent && npm run test -w @brian-code/chat-store && npm run test -w @brian-code/desktop",
     "typecheck": "npm run build -w @brian-code/agent && npm run build -w @brian-code/chat-store && tsc -p apps/cli --noEmit && tsc -p apps/desktop --noEmit && tsc -p apps/desktop/tsconfig.electron.json --noEmit"
   },
   "devDependencies": {

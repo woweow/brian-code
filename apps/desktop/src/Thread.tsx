@@ -1,4 +1,11 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native-web";
+import { useEffect, useRef } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type ScrollViewHandle,
+} from "react-native-web";
 import type { ConversationDetail, UiTurn } from "./types.js";
 
 type ThreadProps = {
@@ -40,6 +47,16 @@ export function Thread({
   error,
   hasSelection,
 }: ThreadProps) {
+  const scrollRef = useRef<ScrollViewHandle | null>(null);
+  const turnCount = conversation?.turns.length ?? 0;
+
+  useEffect(() => {
+    if (!conversation || (turnCount === 0 && !sending)) {
+      return;
+    }
+    scrollRef.current?.scrollToEnd({ animated: true });
+  }, [conversation, turnCount, sending]);
+
   if (!hasSelection) {
     return (
       <View style={styles.center}>
@@ -94,7 +111,7 @@ export function Thread({
           </Text>
         </View>
       ) : (
-        <ScrollView style={styles.scroll}>
+        <ScrollView ref={scrollRef} style={styles.scroll}>
           {conversation.turns.map((turn, index) => (
             <Bubble key={`${turn.role}-${index}`} turn={turn} />
           ))}
@@ -111,6 +128,7 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     minHeight: 0,
+    overflow: "hidden",
   },
   header: {
     paddingHorizontal: 20,
@@ -131,6 +149,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+    minHeight: 0,
     paddingHorizontal: 20,
     paddingVertical: 16,
   },

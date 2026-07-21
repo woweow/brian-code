@@ -97,7 +97,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#141414",
     paddingTop: 12,
     paddingHorizontal: 10,
-    minHeight: "100vh",
+    height: "100%",
+    overflow: "hidden",
   },
   newButton: {
     backgroundColor: "#1f1f1f",
@@ -118,6 +119,7 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+    minHeight: 0,
   },
   empty: {
     color: "#737373",

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native-web";
 import { getDesktopApi, isUsingMockApi } from "./api.js";
 import { Composer } from "./Composer.js";
+import { shouldShowComposer } from "./composerKeys.js";
 import { Sidebar } from "./Sidebar.js";
 import { Thread } from "./Thread.js";
 import type { ConversationDetail, SidebarPayload } from "./types.js";
@@ -142,6 +143,7 @@ export function App() {
   }
 
   const busy = loading || sending || actionBusy;
+  const showComposer = shouldShowComposer(selectedId);
 
   return (
     <View style={styles.shell}>
@@ -167,12 +169,14 @@ export function App() {
           error={error}
           hasSelection={selectedId !== null}
         />
-        <Composer
-          value={draft}
-          onChange={setDraft}
-          onSend={() => void onSend()}
-          disabled={!selectedId || busy}
-        />
+        {showComposer ? (
+          <Composer
+            value={draft}
+            onChange={setDraft}
+            onSend={() => void onSend()}
+            disabled={!selectedId || busy}
+          />
+        ) : null}
       </View>
     </View>
   );
@@ -183,12 +187,15 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     backgroundColor: "#111",
-    minHeight: "100vh",
+    height: "100%",
+    overflow: "hidden",
   },
   main: {
     flex: 1,
     minWidth: 0,
-    minHeight: "100vh",
+    height: "100%",
+    overflow: "hidden",
+    flexDirection: "column",
   },
   banner: {
     color: "#a3a3a3",
