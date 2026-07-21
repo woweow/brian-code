@@ -18,3 +18,19 @@ export {
   type SidebarConversation,
 } from "./chat.js";
 export { projectTranscript, type UiTurn } from "./project.js";
+export {
+  LAST_CONVERSATION_ID_KEY,
+  buildSidebarPayload,
+  createConversationInFolder,
+  getConversationDetail,
+  sendMessage,
+  deleteConversationAndMaybeWorkspace,
+  getBootstrap,
+  truncateTitle,
+  type SidebarGroupConversation,
+  type SidebarWorkspaceGroup,
+  type SidebarPayload,
+  type ConversationDetail,
+  type BootstrapPayload,
+  type RunAgentFn,
+} from "./service.js";

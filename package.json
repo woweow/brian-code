@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "agent": "tsx apps/cli/src/cli.ts",
+    "chat": "tsx apps/cli/src/chat-cli.ts",
     "desktop": "npm run build -w @brian-code/desktop && npm run start -w @brian-code/desktop",
     "desktop:dev": "DESKTOP_DEV=1 npm run build:electron -w @brian-code/desktop && concurrently \"npm run dev:renderer -w @brian-code/desktop\" \"DESKTOP_DEV=1 npm run start -w @brian-code/desktop\"",
     "ui:dev": "npm run dev:renderer -w @brian-code/desktop",

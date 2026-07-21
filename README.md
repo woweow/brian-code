@@ -24,6 +24,16 @@ npm install
 npm run agent -- "Use your available tools to create a person."
 ```
 
+**Headless chat CLI** (SQLite at `BRIAN_CODE_DB` or `~/.brian-code/dev.sqlite`):
+
+```bash
+npm run chat -- new --folder /path/to/workspace
+npm run chat -- list
+npm run chat -- show <conversation-id>
+npm run chat -- send <conversation-id> "Hello"
+npm run chat -- delete <conversation-id>
+```
+
 **Run the desktop app** (build renderer + Electron, then launch):
 
 ```bash
@@ -61,11 +71,13 @@ npm run typecheck
 ```
 packages/agent/       @brian-code/agent — multi-turn runAgent (+ transcript), OpenAI client, tools/
 packages/chat-store/  @brian-code/chat-store — SQLite workspaces, conversations, UI transcript projector
-apps/cli/             Terminal entrypoint
+apps/cli/             Terminal entrypoints (agent one-shot + chat CRUD)
 apps/desktop/         Electron main/preload + RN Web UI (Vite)
 ```
 
-The desktop **main process** loads `.env`, calls `runAgent` from `@brian-code/agent`, and exposes `window.api.runAgent` via preload IPC. Future local capabilities (bash, file edits) belong in the main process, not the renderer.
+The desktop **main process** opens SQLite under Electron `userData` (`brian-code.sqlite`), wires chat IPC to `@brian-code/chat-store`, and runs multi-turn `runAgent` on `sendMessage`. Preload exposes `window.api` (`pickFolder`, `listSidebar`, `getBootstrap`, `createConversation`, `getConversation`, `sendMessage`, `deleteConversation`). Browser-only `ui:dev` uses the mock API instead.
+
+If `better-sqlite3` fails to load in Electron after install, rebuild native bindings for the Electron ABI (e.g. `npx electron-rebuild -f -w better-sqlite3` from the repo root).
 
 ## Adding a tool
 
