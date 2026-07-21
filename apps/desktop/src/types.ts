@@ -44,6 +44,4 @@ export type DesktopApi = {
     text: string,
   ) => Promise<ConversationDetail>;
   deleteConversation: (id: string) => Promise<void>;
-  /** @deprecated Wave 1 legacy; Wave 2 IPC replaces with chat APIs */
-  runAgent?: (prompt: string) => Promise<string>;
 };

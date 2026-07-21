@@ -16,6 +16,7 @@ export function App() {
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -36,6 +37,9 @@ export function App() {
           if (!cancelled) {
             setConversation(detail);
           }
+        } else {
+          setSelectedId(null);
+          setConversation(null);
         }
       } catch (err) {
         if (!cancelled) {
@@ -61,6 +65,7 @@ export function App() {
 
   async function selectConversation(id: string): Promise<void> {
     setSelectedId(id);
+    setConversation(null);
     setLoading(true);
     setError("");
     try {
@@ -76,7 +81,7 @@ export function App() {
 
   async function onNewChat(): Promise<void> {
     setError("");
-    setSending(true);
+    setActionBusy(true);
     try {
       const folder = await api.pickFolder();
       if (!folder) {
@@ -90,36 +95,36 @@ export function App() {
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setSending(false);
+      setActionBusy(false);
     }
   }
 
   async function onDelete(id: string): Promise<void> {
     setError("");
-    setSending(true);
+    setActionBusy(true);
     try {
       await api.deleteConversation(id);
-      await refreshSidebar();
       if (selectedId === id) {
+        setSelectedId(null);
+        setConversation(null);
         const next = await api.getBootstrap();
         setSidebar(next.sidebar);
         if (next.lastConversationId) {
           await selectConversation(next.lastConversationId);
-        } else {
-          setSelectedId(null);
-          setConversation(null);
         }
+      } else {
+        await refreshSidebar();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setSending(false);
+      setActionBusy(false);
     }
   }
 
   async function onSend(): Promise<void> {
     const trimmed = draft.trim();
-    if (!selectedId || !trimmed || sending) {
+    if (!selectedId || !trimmed || sending || actionBusy) {
       return;
     }
     setSending(true);
@@ -136,7 +141,7 @@ export function App() {
     }
   }
 
-  const busy = loading || sending;
+  const busy = loading || sending || actionBusy;
 
   return (
     <View style={styles.shell}>
@@ -157,7 +162,8 @@ export function App() {
         ) : null}
         <Thread
           conversation={conversation}
-          loading={busy}
+          loading={loading}
+          sending={sending}
           error={error}
           hasSelection={selectedId !== null}
         />
@@ -165,7 +171,7 @@ export function App() {
           value={draft}
           onChange={setDraft}
           onSend={() => void onSend()}
-          disabled={!selectedId || sending}
+          disabled={!selectedId || busy}
         />
       </View>
     </View>

@@ -4,6 +4,7 @@ import type { ConversationDetail, UiTurn } from "./types.js";
 type ThreadProps = {
   conversation: ConversationDetail | null;
   loading: boolean;
+  sending: boolean;
   error: string;
   hasSelection: boolean;
 };
@@ -35,6 +36,7 @@ function Bubble({ turn }: { turn: UiTurn }) {
 export function Thread({
   conversation,
   loading,
+  sending,
   error,
   hasSelection,
 }: ThreadProps) {
@@ -84,7 +86,7 @@ export function Thread({
         </Text>
       </View>
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
-      {conversation.turns.length === 0 ? (
+      {conversation.turns.length === 0 && !sending ? (
         <View style={styles.center}>
           <Text style={styles.emptyTitle}>Empty thread</Text>
           <Text style={styles.emptyBody}>
@@ -96,7 +98,7 @@ export function Thread({
           {conversation.turns.map((turn, index) => (
             <Bubble key={`${turn.role}-${index}`} turn={turn} />
           ))}
-          {loading ? (
+          {sending ? (
             <Text style={styles.statusInline}>Waiting for reply…</Text>
           ) : null}
         </ScrollView>
