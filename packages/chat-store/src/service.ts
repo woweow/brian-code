@@ -48,7 +48,7 @@ export type BootstrapPayload = {
 
 export type RunAgentFn = (
   prompt: string,
-  options?: { transcript?: unknown[] },
+  options?: { transcript?: unknown[]; workspaceRoot?: string },
 ) => Promise<{ finalText: string; updatedTranscript: unknown[] }>;
 
 function getWorkspace(db: ChatDb, id: string): Workspace | null {
@@ -171,6 +171,7 @@ export async function sendMessage(
     hadEmptyTurns || conversation.title === "New chat" || !conversation.title;
   const result = await runAgent(trimmed, {
     transcript: conversation.transcript,
+    workspaceRoot: workspace.folderPath,
   });
   const title = shouldRetitle ? truncateTitle(trimmed) : undefined;
   const updated = updateConversationTranscript(

@@ -5,11 +5,12 @@ import { toolDefinitions, toolExecutors } from "../tools/index.js";
 const MAX_STEPS = 10;
 
 const DEFAULT_INSTRUCTIONS =
-  "You are a helpful assistant. When the user asks you to create or describe a person using your tools, call the relevant tools first, then summarize the result clearly.";
+  "You are a helpful assistant with workspace tools: fileRead, fileWrite, and bash (scoped to the current workspace folder). When the user asks you to create or describe a person using your tools, call the relevant tools first, then summarize the result clearly. Do not use rm; ask the user to delete files themselves.";
 
 export type AgentRunOptions = {
   instructions?: string;
   transcript?: OpenAI.Responses.ResponseInputItem[];
+  workspaceRoot?: string;
 };
 
 export type AgentRunResult = {
@@ -31,6 +32,7 @@ export async function runAgent(
 ): Promise<AgentRunResult> {
   const openai = createOpenAIClient();
   const input = seedTranscript(prompt, options?.transcript);
+  const ctx = { workspaceRoot: options?.workspaceRoot ?? process.cwd() };
 
   for (let step = 0; step < MAX_STEPS; step++) {
     const response = await openai.responses.create({
@@ -71,7 +73,7 @@ export async function runAgent(
 
       const args =
         call.arguments.trim() === "" ? {} : JSON.parse(call.arguments);
-      const output = await execute(args);
+      const output = await execute(args, ctx);
       input.push({
         type: "function_call_output",
         call_id: call.call_id,

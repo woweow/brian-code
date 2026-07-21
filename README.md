@@ -88,7 +88,9 @@ npm run rebuild:native:node       # before CLI / tests
 
 ## Adding a tool
 
-1. Add a file under `packages/agent/tools/` (`AgentTool` with `definition` + `execute`).
+1. Add a file under `packages/agent/tools/` (`AgentTool` with `definition` + `execute(args, ctx)`).
 2. Register it in `packages/agent/tools/index.ts`.
+
+Built-in workspace tools (`fileRead`, `fileWrite`, `bash`) resolve paths relative to the conversation `folderPath` (one-shot agent uses `process.cwd()`). Paths containing `..` are rejected. `bash` blocks `rm` and tells the model to ask the user to delete files.
 
 Model is fixed to `gpt-5.4-mini` in `packages/agent/src/openai-client.ts`.

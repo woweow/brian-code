@@ -105,8 +105,6 @@ function registerIpcHandlers(): void {
       if (typeof text !== "string") {
         throw new Error("text must be a string");
       }
-      // folderPath is available on the conversation detail for future tool context;
-      // current tools ignore workspace path, so runAgent gets transcript only.
       return sendMessage(
         requireDb(),
         conversationId.trim(),
@@ -114,6 +112,7 @@ function registerIpcHandlers(): void {
         async (prompt, options) =>
           runAgent(prompt, {
             transcript: options?.transcript as AgentRunOptions["transcript"],
+            workspaceRoot: options?.workspaceRoot,
           }),
       );
     },

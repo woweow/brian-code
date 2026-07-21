@@ -44,6 +44,7 @@ describe("sendMessage", () => {
 
     expect(runAgent).toHaveBeenCalledWith("Hello world", {
       transcript: [],
+      workspaceRoot: path.resolve(folder),
     });
     expect(detail.title).toBe("Hello world");
     expect(detail.turns).toEqual([
