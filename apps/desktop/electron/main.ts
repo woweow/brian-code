@@ -1,8 +1,19 @@
 import { config } from "dotenv";
-import { app, BrowserWindow, ipcMain } from "electron";
-import { resolve } from "node:path";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { runAgent } from "@brian-code/agent";
+import { runAgent, type AgentRunOptions } from "@brian-code/agent";
+import {
+  buildSidebarPayload,
+  closeDb,
+  createConversationInFolder,
+  deleteConversationAndMaybeWorkspace,
+  getBootstrap,
+  getConversationDetail,
+  openDb,
+  sendMessage,
+  type ChatDb,
+} from "@brian-code/chat-store";
 
 const repoRoot = resolve(
   fileURLToPath(new URL(".", import.meta.url)),
@@ -12,10 +23,19 @@ config({ path: resolve(repoRoot, ".env") });
 
 const isDev = process.env.DESKTOP_DEV === "1";
 
+let db: ChatDb | null = null;
+
+function requireDb(): ChatDb {
+  if (!db) {
+    throw new Error("Database not initialized");
+  }
+  return db;
+}
+
 function createWindow(): void {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1100,
+    height: 720,
     webPreferences: {
       preload: resolve(
         fileURLToPath(new URL(".", import.meta.url)),
@@ -40,17 +60,76 @@ function createWindow(): void {
   });
 }
 
-ipcMain.handle("agent:run", async (_event, prompt: unknown) => {
-  if (typeof prompt !== "string" || prompt.trim() === "") {
-    throw new Error("Prompt must be a non-empty string");
-  }
-  // Wave 1: runAgent now returns { finalText, updatedTranscript }.
-  // Wave 2 will wire multi-turn transcript through IPC.
-  const { finalText } = await runAgent(prompt.trim());
-  return finalText;
-});
+function registerIpcHandlers(): void {
+  ipcMain.handle("chat:pickFolder", async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ["openDirectory"],
+    });
+    if (result.canceled || result.filePaths.length === 0) {
+      return null;
+    }
+    return result.filePaths[0] ?? null;
+  });
+
+  ipcMain.handle("chat:listSidebar", async () => {
+    return buildSidebarPayload(requireDb());
+  });
+
+  ipcMain.handle("chat:getBootstrap", async () => {
+    return getBootstrap(requireDb());
+  });
+
+  ipcMain.handle(
+    "chat:createConversation",
+    async (_event, folderPath: unknown) => {
+      if (typeof folderPath !== "string" || folderPath.trim() === "") {
+        throw new Error("folderPath must be a non-empty string");
+      }
+      return createConversationInFolder(requireDb(), folderPath.trim());
+    },
+  );
+
+  ipcMain.handle("chat:getConversation", async (_event, id: unknown) => {
+    if (typeof id !== "string" || id.trim() === "") {
+      throw new Error("id must be a non-empty string");
+    }
+    return getConversationDetail(requireDb(), id.trim());
+  });
+
+  ipcMain.handle(
+    "chat:sendMessage",
+    async (_event, conversationId: unknown, text: unknown) => {
+      if (typeof conversationId !== "string" || conversationId.trim() === "") {
+        throw new Error("conversationId must be a non-empty string");
+      }
+      if (typeof text !== "string") {
+        throw new Error("text must be a string");
+      }
+      // folderPath is available on the conversation detail for future tool context;
+      // current tools ignore workspace path, so runAgent gets transcript only.
+      return sendMessage(
+        requireDb(),
+        conversationId.trim(),
+        text,
+        async (prompt, options) =>
+          runAgent(prompt, {
+            transcript: options?.transcript as AgentRunOptions["transcript"],
+          }),
+      );
+    },
+  );
+
+  ipcMain.handle("chat:deleteConversation", async (_event, id: unknown) => {
+    if (typeof id !== "string" || id.trim() === "") {
+      throw new Error("id must be a non-empty string");
+    }
+    deleteConversationAndMaybeWorkspace(requireDb(), id.trim());
+  });
+}
 
 app.whenReady().then(() => {
+  db = openDb(join(app.getPath("userData"), "brian-code.sqlite"));
+  registerIpcHandlers();
   createWindow();
 
   app.on("activate", () => {
@@ -63,5 +142,12 @@ app.whenReady().then(() => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
+  }
+});
+
+app.on("before-quit", () => {
+  if (db) {
+    closeDb(db);
+    db = null;
   }
 });
